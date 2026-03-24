@@ -3,224 +3,836 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CoirHub - Coconut Fibre Rope Business App</title>
-    <!-- Use Google Fonts -->
+    <title>CoirHub - Multi-User System</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css">
-    <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script>
+        try {
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            let t = 'dark';
+            if (user && user.themePreference === 'manual') {
+                t = user.theme === 'light' ? 'light' : 'dark';
+            } else if (window.matchMedia) {
+                t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            document.documentElement.className = t;
+            document.body.className = t;
+        } catch(e) {
+            document.body.className = 'dark';
+            document.documentElement.className = 'dark';
+        }
+    </script>
+
+    <style>
+        :root { --bg-main: #0f111a; --bg-panel: rgba(25, 28, 41, 0.7); --border-glass: rgba(255, 255, 255, 0.08); --text-primary: #f8fafc; --text-secondary: #94a3b8; --accent: #8b5cf6; --accent-hover: #7c3aed; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --info: #3b82f6; --font: 'Outfit', sans-serif; --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); --input-bg: rgba(0, 0, 0, 0.2); --sidebar-bg: rgba(15, 17, 26, 0.8); }
+        body.light { --bg-main: #f1f5f9; --bg-panel: rgba(255, 255, 255, 0.85); --border-glass: rgba(0, 0, 0, 0.08); --text-primary: #0f172a; --text-secondary: #475569; --input-bg: rgba(255, 255, 255, 0.7); --accent: #7c3aed; --accent-hover: #6d28d9; --sidebar-bg: rgba(255, 255, 255, 0.8); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--font); }
+        body { background-color: var(--bg-main); color: var(--text-primary); background-image: radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.15), transparent 25%), radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.15), transparent 25%); background-attachment: fixed; min-height: 100vh; overflow-x: hidden; transition: background-color 0.3s ease, color 0.3s ease; }
+        .glass-panel { background: var(--bg-panel); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border-glass); border-radius: 16px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); }
+        .app-container { display: flex; height: 100vh; }
+        .sidebar { width: 280px; background: var(--sidebar-bg); backdrop-filter: blur(20px); border-right: 1px solid var(--border-glass); display: flex; flex-direction: column; padding: 24px; z-index: 10; transition: background 0.3s ease; }
+        .logo-area { display: flex; align-items: center; gap: 12px; margin-bottom: 48px; }
+        .logo-area i { font-size: 28px; color: var(--accent); }
+        .logo-area h2 { font-size: 24px; font-weight: 700; }
+        .nav-menu { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+        .nav-item { display: flex; align-items: center; gap: 16px; padding: 14px 18px; color: var(--text-secondary); text-decoration: none; border-radius: 12px; font-weight: 500; transition: var(--transition); background: transparent; border: none; cursor: pointer; text-align: left; width: 100%; font-size: 16px; }
+        .nav-item:hover { background: rgba(139, 92, 246, 0.05); color: var(--text-primary); transform: translateX(4px); }
+        .nav-item.active { background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.05)); color: var(--accent); border: 1px solid rgba(139, 92, 246, 0.3); }
+        .user-profile { display: flex; align-items: center; gap: 12px; padding-top: 24px; border-top: 1px solid var(--border-glass); }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 18px; overflow: hidden; color: white;}
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .user-info { display: flex; flex-direction: column; }
+        .user-name { font-weight: 600; font-size: 14px; }
+        .user-role { font-size: 12px; color: var(--text-secondary); }
+        .main-content { flex: 1; display: flex; flex-direction: column; padding: 32px 48px; overflow-y: auto; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; flex-wrap: wrap; gap: 16px;}
+        .top-bar h1 { font-size: 32px; font-weight: 700; }
+        .btn { padding: 12px 24px; border-radius: 10px; font-weight: 600; font-size: 15px; cursor: pointer; border: none; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-primary { background: var(--accent); color: white; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3); }
+        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4); }
+        .btn-secondary { background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--border-glass); }
+        .btn-secondary:hover { background: rgba(139, 92, 246, 0.08); }
+        .btn-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .btn-danger:hover { background: rgba(239, 68, 68, 0.25); }
+        .views-container { flex: 1; }
+        .view-section { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 32px; }
+        .stat-card { padding: 24px; display: flex; align-items: center; gap: 20px; transition: var(--transition); }
+        .stat-card:hover { transform: translateY(-5px); border-color: rgba(139, 92, 246, 0.3); }
+        .stat-icon { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; }
+        .bg-blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .bg-green { background: linear-gradient(135deg, #10b981, #059669); }
+        .bg-orange { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .bg-red { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .stat-details h3 { font-size: 14px; font-weight: 500; color: var(--text-secondary); margin-bottom: 4px; }
+        .stat-details p { font-size: 28px; font-weight: 700; color: var(--text-primary); }
+        .panel { padding: 24px; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .panel-header h2 { font-size: 20px; font-weight: 600; }
+        .glass-input { background: var(--input-bg); border: 1px solid var(--border-glass); color: var(--text-primary); padding: 12px 16px; border-radius: 10px; font-size: 15px; width: 100%; outline: none; transition: var(--transition); }
+        .glass-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2); }
+        option { background: var(--bg-main); color: var(--text-primary); }
+        .table-responsive { overflow-x: auto; }
+        .data-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .data-table th { text-align: left; padding: 16px; color: var(--text-secondary); font-weight: 500; font-size: 14px; border-bottom: 1px solid var(--border-glass); }
+        .data-table td { padding: 16px; border-bottom: 1px solid var(--border-glass); font-size: 15px; }
+        .data-table tbody tr:hover { background: rgba(139, 92, 246, 0.05); }
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; cursor: default; }
+        .badge-purchase { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+        body.dark .badge-purchase { color: #fcd34d; }
+        .badge-sale { background: rgba(16, 185, 129, 0.15); color: #059669; }
+        body.dark .badge-sale { color: #6ee7b7; }
+        .badge-paid { background: rgba(59, 130, 246, 0.15); color: #2563eb; cursor: pointer; }
+        body.dark .badge-paid { color: #93c5fd; }
+        .badge-unpaid { background: rgba(239, 68, 68, 0.15); color: #dc2626; cursor: pointer; }
+        body.dark .badge-unpaid { color: #fca5a5; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 100; }
+        .modal-content { width: 100%; max-width: 600px; padding: 32px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+        .close-btn { background: none; border: none; color: var(--text-secondary); font-size: 24px; cursor: pointer; }
+        .close-btn:hover { color: var(--text-primary); }
+        .transaction-form { display: flex; flex-direction: column; gap: 20px; }
+        .form-row { display: flex; gap: 20px; }
+        .form-row .form-group { flex: 1; }
+        .form-group label { display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 14px; }
+        .radio-group { display: flex; gap: 16px; }
+        .radio-card { flex: 1; position: relative; cursor: pointer; }
+        .radio-card input { position: absolute; opacity: 0; }
+        .radio-content { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 16px; background: var(--input-bg); border: 1px solid var(--border-glass); border-radius: 12px; font-weight: 500; transition: var(--transition); }
+        .radio-card input:checked + .radio-content { background: rgba(139, 92, 246, 0.15); border-color: var(--accent); color: var(--accent); }
+        .form-actions { display: flex; justify-content: flex-end; gap: 16px; margin-top: 16px; }
+        .recent-activity-list { display: flex; flex-direction: column; gap: 16px; padding: 24px; }
+        .activity-item { display: flex; align-items: center; justify-content: space-between; padding-bottom: 16px; border-bottom: 1px solid var(--border-glass); }
+        .activity-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .activity-info { display: flex; align-items: center; gap: 16px; }
+        .activity-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: white;}
+        .icon-purchase { background: var(--warning); }
+        .icon-sale { background: var(--success); }
+        .activity-text h4 { font-size: 15px; margin-bottom: 4px; }
+        .activity-text p { font-size: 13px; color: var(--text-secondary); }
+        .activity-amount { font-weight: 600; font-size: 16px; }
+        .text-positive { color: var(--success); }
+        .text-negative { color: var(--warning); }
+        
+        .login-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; width: 100vw; padding: 20px; }
+        .login-box { width: 100%; max-width: 400px; text-align: center; }
+        .login-box i.logo { font-size: 48px; color: var(--accent); margin-bottom: 16px; }
+        .login-box h1 { margin-bottom: 8px; font-size: 28px; }
+        .login-box p { color: var(--text-secondary); margin-bottom: 32px; }
+        .toggle-link { color: var(--accent); cursor: pointer; font-size: 14px; margin-top: 16px; display: inline-block; }
+        .toggle-link:hover { text-decoration: underline; }
+
+        @media (max-width: 768px) {
+            .app-container { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; padding: 16px; flex-direction: row; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-glass); border-right: none; }
+            .logo-area { margin-bottom: 0; }
+            .nav-menu { display: none; }
+            .main-content { padding: 20px; }
+            .form-row { flex-direction: column; gap: 20px; }
+            .sidebar-mobile-menu { display: flex; width:100%; justify-content:space-around; background: var(--sidebar-bg); backdrop-filter: blur(20px); padding:10px; position:fixed; bottom:0; left:0; z-index:100; border-top:1px solid var(--border-glass)}
+            .sidebar-mobile-menu button { background:none; border:none; color:var(--text-secondary); padding:10px; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:12px; }
+            .sidebar-mobile-menu button.active { color:var(--accent); }
+            .sidebar-mobile-menu button i { font-size: 20px; }
+            body { padding-bottom: 60px; } 
+        }
+    </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="logo-area">
-                <i class="fa-solid fa-leaf text-accent"></i>
-                <h2>CoirHub</h2>
-            </div>
-            <nav class="nav-menu">
-                <a href="#" class="nav-item active" data-target="dashboard">
-                    <i class="fa-solid fa-chart-pie"></i> Dashboard
-                </a>
-                <a href="#" class="nav-item" data-target="transactions">
-                    <i class="fa-solid fa-money-bill-transfer"></i> Transactions
-                </a>
-                <a href="#" class="nav-item" data-target="stock">
-                    <i class="fa-solid fa-boxes-stacked"></i> Stock Movement
-                </a>
-            </nav>
-            <div class="user-profile">
-                <div class="avatar"><i class="fa-solid fa-user"></i></div>
-                <div class="user-info">
-                    <span class="user-name">Admin</span>
-                    <span class="user-role">Business Owner</span>
-                </div>
-            </div>
-        </aside>
+    <div id="root"></div>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Header -->
-            <header class="top-bar">
-                <h1 id="page-title">Dashboard</h1>
-                <div class="top-actions">
-                    <button class="btn btn-primary" id="btn-new-transaction">
-                        <i class="fa-solid fa-plus"></i> New Transaction
-                    </button>
-                </div>
-            </header>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-            <div class="views-container">
-                <!-- Dashboard View -->
-                <section id="dashboard" class="view-section active">
-                    <div class="stats-grid">
-                        <div class="stat-card glass-panel">
-                            <div class="stat-icon bg-blue"><i class="fa-solid fa-box-open"></i></div>
-                            <div class="stat-details">
-                                <h3>Total Stock In Hand</h3>
-                                <p class="stat-value" id="dash-stock">0 kg</p>
+        const dict = {
+            en: {
+                welcome: "Welcome", totalStock: "Total Stock In Hand", totalSales: "Total Sales", 
+                totalPurchases: "Total Purchases", pendingPayments: "Pending Payments", 
+                recentActivity: "Recent Activity", allTx: "All Transactions", 
+                date: "Date", type: "Type", partyName: "Party Name", qty: "Quantity", 
+                amount: "Amount", payment: "Payment", action: "Action", stockMovement: "Stock Movement",
+                desc: "Description", in: "In (+)", out: "Out (-)", bal: "Balance",
+                dashboard: "Dashboard", transactions: "Transactions", stock: "Stock", profile: "Profile",
+                login: "Login", register: "Register", phone: "Phone Number", name: "Full Name",
+                save: "Save Profile", logout: "Logout", newTx: "New Transaction",
+                addTx: "Add Transaction", cancel: "Cancel", purchase: "Purchase", sale: "Sale",
+                paid: "Paid", unpaid: "Unpaid", allTypes: "All Types",
+                purchases: "Purchases", sales: "Sales", saveTx: "Save Transaction",
+                noActivity: "No recent activity found.", noTx: "No transactions recorded.", 
+                noStock: "No stock movements recorded.", myProfile: "My Profile",
+                uploadPhoto: "Upload Photo", language: "Language", theme: "Appearance", dark: "Dark Mode", light: "Light Mode", systemTheme: "System Default"
+            },
+            ta: {
+                welcome: "வரவேற்கிறோம்", totalStock: "மொத்த இருப்பு", totalSales: "மொத்த விற்பனை",
+                totalPurchases: "மொத்த கொள்முதல்", pendingPayments: "நிலுவைத் தொகைகள்",
+                recentActivity: "சமீபத்திய செயல்பாடு", allTx: "அனைத்து பரிவர்த்தனைகள்",
+                date: "தேதி", type: "வகை", partyName: "நிறுவனம் பெயர்", qty: "அளவு",
+                amount: "தொகை", payment: "கட்டணம்", action: "செயல்", stockMovement: "இருப்பு நகர்வு",
+                desc: "விவரம்", in: "உள்ளே (+)", out: "வெளியே (-)", bal: "மீதம்",
+                dashboard: "முகப்பு", transactions: "பரிவர்த்தனைகள்", stock: "இருப்பு", profile: "சுயவிவரம்",
+                login: "உள்நுழை", register: "பதிவு செய்", phone: "மொபைல் எண்", name: "முழு பெயர்",
+                save: "சேமி", logout: "வெளியேறு", newTx: "புதிய பதிவு",
+                addTx: "பரிவர்த்தனை சேர்", cancel: "ரத்துசெய்", purchase: "கொள்முதல்", sale: "விற்பனை",
+                paid: "செலுத்தப்பட்டது", unpaid: "நிலுவை", allTypes: "அனைத்தும்",
+                purchases: "கொள்முதல்", sales: "விற்பனை", saveTx: "பதிவை சேமி",
+                noActivity: "சமீபத்திய குறிப்புகள் இல்லை.", noTx: "பரிவர்த்தனைகள் எதுவும் இல்லை.", 
+                noStock: "இருப்பு பதிவுகள் எதுவும் இல்லை.", myProfile: "என் சுயவிவரம்",
+                uploadPhoto: "படம் பதிவேற்று", language: "மொழி", theme: "தோற்றம்", dark: "இருள்", light: "வெளிச்சம்", systemTheme: "கணினி இயல்புநிலை"
+            }
+        };
+
+        const formatRs = (num) => '₹' + num.toLocaleString('en-IN');
+
+        function AuthPage({ onLogin }) {
+            const [isLogin, setIsLogin] = useState(true);
+            const [phone, setPhone] = useState('');
+            const [name, setName] = useState('');
+            const [lang, setLang] = useState('en');
+            const [photo, setPhoto] = useState(null);
+            const [error, setError] = useState('');
+            const [msg, setMsg] = useState('');
+
+            const handlePhoto = (e) => {
+                const file = e.target.files[0];
+                if(file){
+                    const reader = new FileReader();
+                    reader.onloadend = () => setPhoto(reader.result);
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            const submit = (e) => {
+                e.preventDefault();
+                setError(''); setMsg('');
+                const users = JSON.parse(localStorage.getItem('users')) || [];
+
+                if(isLogin){
+                    if(!phone.trim()) return setError('Phone Number is required');
+                    const foundUser = users.find(u => u.phone === phone);
+                    if(!foundUser) return setError('You are not registered. Please register first.');
+                    
+                    const legacyTx = JSON.parse(localStorage.getItem('coirhub_transactions'));
+                    if(legacyTx && legacyTx.length > 0 && foundUser.data.transactions.length === 0){
+                        foundUser.data.transactions = legacyTx;
+                        localStorage.removeItem('coirhub_transactions');
+                        localStorage.setItem('users', JSON.stringify(users));
+                    }
+                    onLogin(foundUser);
+                } else {
+                    if(!name.trim() || !phone.trim()) return setError('Name and Phone are required');
+                    if(users.some(u => u.phone === phone)) return setError('Phone already registered');
+                    
+                    const newUser = {
+                        id: Date.now().toString(),
+                        name, phone, photo, language: lang,
+                        themePreference: 'system',
+                        theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
+                        data: { transactions: [] }
+                    };
+                    users.push(newUser);
+                    localStorage.setItem('users', JSON.stringify(users));
+                    setMsg('Registered successfully! Please login.');
+                    setIsLogin(true);
+                    setPhone(''); setName(''); setPhoto(null); setLang('en');
+                }
+            };
+
+            return (
+                <div className="login-page">
+                    <div className="glass-panel panel login-box">
+                        <i className="fa-solid fa-leaf logo"></i>
+                        <h1>{isLogin ? 'Login' : 'Register'}</h1>
+                        <p>{isLogin ? 'Sign in to access your data' : 'Create a new account'}</p>
+                        
+                        {error && <p style={{color:'var(--danger)', marginBottom:'10px', fontSize:'14px'}}>{error}</p>}
+                        {msg && <p style={{color:'var(--success)', marginBottom:'10px', fontSize:'14px'}}>{msg}</p>}
+
+                        <form onSubmit={submit} style={{display:'flex', flexDirection:'column', gap:'16px'}}>
+                            {!isLogin && (
+                                <>
+                                    <div className="form-group" style={{textAlign:'left'}}>
+                                        <label>Full Name</label>
+                                        <input type="text" className="glass-input" value={name} onChange={e=>setName(e.target.value)} placeholder="Your Name" />
+                                    </div>
+                                    <div className="form-group" style={{textAlign:'left'}}>
+                                        <label>Language</label>
+                                        <select className="glass-input" value={lang} onChange={e=>setLang(e.target.value)}>
+                                            <option value="en">English</option>
+                                            <option value="ta">தமிழ் (Tamil)</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group" style={{textAlign:'left'}}>
+                                        <label>Profile Photo (Optional)</label>
+                                        <input type="file" accept="image/*" className="glass-input" onChange={handlePhoto} />
+                                    </div>
+                                </>
+                            )}
+                            <div className="form-group" style={{textAlign:'left'}}>
+                                <label>Phone Number</label>
+                                <input type="tel" className="glass-input" value={phone} onChange={e=>setPhone(e.target.value)} placeholder="e.g. 9876543210" />
+                            </div>
+
+                            <button type="submit" className="btn btn-primary" style={{marginTop:'8px', width:'100%'}}>
+                                {isLogin ? 'Login' : 'Register Account'}
+                            </button>
+                        </form>
+
+                        <div className="toggle-link" onClick={() => {setIsLogin(!isLogin); setError(''); setMsg('');}}>
+                            {isLogin ? "Don't have an account? Register here" : "Already registered? Login here"}
+                        </div>
+                    </div>
+                </div>
+            )
+        }
+
+        function Dashboard({ transactions, user, tr }) {
+            let stock = 0, totalSales = 0, totalPurchases = 0, pendingPayments = 0;
+            
+            transactions.forEach(tx => {
+                if (tx.type === 'purchase') {
+                    stock += tx.qty; totalPurchases += tx.amount;
+                    if (tx.payment === 'unpaid') pendingPayments += tx.amount;
+                } else if (tx.type === 'sale') {
+                    stock -= tx.qty; totalSales += tx.amount;
+                    if (tx.payment === 'unpaid') pendingPayments += tx.amount;
+                }
+            });
+
+            const recentTx = transactions.slice(0, 5);
+
+            return (
+                <div className="view-section">
+                    <h2 style={{fontSize:'24px', marginBottom:'24px'}}>{tr('welcome')}, {user?.name || 'User'} 👋</h2>
+                    <div className="stats-grid">
+                        <div className="stat-card glass-panel">
+                            <div className="stat-icon bg-blue"><i className="fa-solid fa-box-open"></i></div>
+                            <div className="stat-details">
+                                <h3>{tr('totalStock')}</h3>
+                                <p className="stat-value">{stock} kg</p>
                             </div>
                         </div>
-                        <div class="stat-card glass-panel">
-                            <div class="stat-icon bg-green"><i class="fa-solid fa-arrow-trend-up"></i></div>
-                            <div class="stat-details">
-                                <h3>Total Sales</h3>
-                                <p class="stat-value" id="dash-sales">₹0</p>
+                        <div className="stat-card glass-panel">
+                            <div className="stat-icon bg-green"><i className="fa-solid fa-arrow-trend-up"></i></div>
+                            <div className="stat-details">
+                                <h3>{tr('totalSales')}</h3>
+                                <p className="stat-value">{formatRs(totalSales)}</p>
                             </div>
                         </div>
-                        <div class="stat-card glass-panel">
-                            <div class="stat-icon bg-orange"><i class="fa-solid fa-cart-shopping"></i></div>
-                            <div class="stat-details">
-                                <h3>Total Purchases</h3>
-                                <p class="stat-value" id="dash-purchases">₹0</p>
+                        <div className="stat-card glass-panel">
+                            <div className="stat-icon bg-orange"><i className="fa-solid fa-cart-shopping"></i></div>
+                            <div className="stat-details">
+                                <h3>{tr('totalPurchases')}</h3>
+                                <p className="stat-value">{formatRs(totalPurchases)}</p>
                             </div>
                         </div>
-                        <div class="stat-card glass-panel">
-                            <div class="stat-icon bg-red"><i class="fa-solid fa-hand-holding-dollar"></i></div>
-                            <div class="stat-details">
-                                <h3>Pending Payments</h3>
-                                <p class="stat-value" id="dash-pending">₹0</p>
+                        <div className="stat-card glass-panel">
+                            <div className="stat-icon bg-red"><i className="fa-solid fa-hand-holding-dollar"></i></div>
+                            <div className="stat-details">
+                                <h3>{tr('pendingPayments')}</h3>
+                                <p className="stat-value">{formatRs(pendingPayments)}</p>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="dashboard-charts glass-panel">
-                        <div class="panel-header" style="margin-bottom: 0;">
-                            <h2>Recent Activity</h2>
+                    <div className="dashboard-charts glass-panel">
+                        <div className="panel-header" style={{marginBottom: 0}}>
+                            <h2>{tr('recentActivity')}</h2>
                         </div>
-                        <div class="recent-activity-list" id="recent-activity">
-                            <!-- Populated dynamically -->
+                        <div className="recent-activity-list">
+                            {recentTx.length === 0 ? (
+                                <p style={{color:'var(--text-secondary)'}}>{tr('noActivity')}</p>
+                            ) : (
+                                recentTx.map(tx => {
+                                    const isPurchase = tx.type === 'purchase';
+                                    return (
+                                        <div className="activity-item" key={tx.id}>
+                                            <div className="activity-info">
+                                                <div className={`activity-icon ${isPurchase ? 'icon-purchase' : 'icon-sale'}`}>
+                                                    <i className={`fa-solid ${isPurchase ? 'fa-cart-arrow-down' : 'fa-chart-line'}`}></i>
+                                                </div>
+                                                <div className="activity-text">
+                                                    <h4>{tx.party}</h4>
+                                                    <p>{new Date(tx.date).toLocaleDateString()} • {tx.qty} kg</p>
+                                                </div>
+                                            </div>
+                                            <div className={`activity-amount ${isPurchase ? 'text-negative' : 'text-positive'}`}>
+                                                {isPurchase ? '-' : '+'}{formatRs(tx.amount)}
+                                            </div>
+                                        </div>
+                                    )
+                                })
+                            )}
                         </div>
                     </div>
-                </section>
+                </div>
+            );
+        }
 
-                <!-- Transactions View -->
-                <section id="transactions" class="view-section hidden">
-                    <div class="panel glass-panel">
-                        <div class="panel-header">
-                            <h2>All Transactions</h2>
-                            <div class="filters">
-                                <select id="filter-type" class="glass-input" style="width: auto;">
-                                    <option value="all">All Types</option>
-                                    <option value="purchase">Purchases</option>
-                                    <option value="sale">Sales</option>
+        function Transactions({ transactions, onDelete, onTogglePayment, tr }) {
+            const [filter, setFilter] = useState('all');
+            const filteredTx = filter === 'all' ? transactions : transactions.filter(t => t.type === filter);
+
+            return (
+                <div className="view-section">
+                    <div className="panel glass-panel">
+                        <div className="panel-header">
+                            <h2>{tr('allTx')}</h2>
+                            <div className="filters">
+                                <select className="glass-input" style={{width:'auto'}} value={filter} onChange={e=>setFilter(e.target.value)}>
+                                    <option value="all">{tr('allTypes')}</option>
+                                    <option value="purchase">{tr('purchases')}</option>
+                                    <option value="sale">{tr('sales')}</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="table-responsive">
-                            <table class="data-table">
+                        <div className="table-responsive">
+                            <table className="data-table">
                                 <thead>
                                     <tr>
-                                        <th>Date</th>
-                                        <th>Type</th>
-                                        <th>Party Name</th>
-                                        <th>Quantity</th>
-                                        <th>Amount</th>
-                                        <th>Payment</th>
-                                        <th>Action</th>
+                                        <th>{tr('date')}</th><th>{tr('type')}</th><th>{tr('partyName')}</th>
+                                        <th>{tr('qty')}</th><th>{tr('amount')}</th><th>{tr('payment')}</th><th>{tr('action')}</th>
                                     </tr>
                                 </thead>
-                                <tbody id="transactions-body">
-                                    <!-- Populated dynamically -->
+                                <tbody>
+                                    {filteredTx.length===0 ? <tr><td colSpan="7" style={{textAlign:'center', padding:'24px'}}>{tr('noTx')}</td></tr> : 
+                                        filteredTx.map(tx=>(
+                                            <tr key={tx.id}>
+                                                <td>{new Date(tx.date).toLocaleDateString()}</td>
+                                                <td><span className={`badge ${tx.type==='purchase'?'badge-purchase':'badge-sale'}`}>{tr(tx.type)}</span></td>
+                                                <td><strong>{tx.party}</strong></td>
+                                                <td>{tx.qty} kg</td>
+                                                <td>{formatRs(tx.amount)}</td>
+                                                <td>
+                                                    <span className={`badge ${tx.payment==='paid'?'badge-paid':'badge-unpaid'}`} onClick={()=>onTogglePayment(tx.id)}>
+                                                        {tr(tx.payment)}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <button className="btn btn-secondary" style={{padding:'6px 10px', fontSize:'12px'}} onClick={()=>onDelete(tx.id)}>
+                                                        <i className="fa-solid fa-trash" style={{color:'var(--danger)'}}></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    }
                                 </tbody>
                             </table>
                         </div>
-                    </div>
-                </section>
-
-                <!-- Stock View -->
-                <section id="stock" class="view-section hidden">
-                    <div class="panel glass-panel">
-                        <div class="panel-header">
-                            <h2>Stock Movement (Quantity In / Out)</h2>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Description</th>
-                                        <th>In (+)</th>
-                                        <th>Out (-)</th>
-                                        <th>Balance</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="stock-body">
-                                    <!-- Populated dynamically -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </main>
-    </div>
-
-    <!-- Modal for New Transaction -->
-    <div id="transaction-modal" class="modal-overlay hidden">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2>Add Transaction</h2>
-                <button class="close-btn" id="close-modal"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <form id="transaction-form" class="transaction-form">
-                <div class="form-group">
-                    <label>Transaction Type *</label>
-                    <div class="radio-group">
-                        <label class="radio-card">
-                            <input type="radio" name="tx_type" value="purchase" required>
-                            <span class="radio-content">
-                                <i class="fa-solid fa-cart-arrow-down"></i> Purchase (Stock In)
-                            </span>
-                        </label>
-                        <label class="radio-card">
-                            <input type="radio" name="tx_type" value="sale" required>
-                            <span class="radio-content">
-                                <i class="fa-solid fa-chart-line"></i> Sale (Stock Out)
-                            </span>
-                        </label>
                     </div>
                 </div>
+            )
+        }
+
+        function StockMovement({ transactions, tr }) {
+            let balance = 0;
+            const txs = [...transactions].sort((a,b)=>new Date(a.date)-new Date(b.date));
+            const rows = txs.map(tx=>{
+                if(tx.type==='purchase') balance+=tx.qty; else balance-=tx.qty;
+                return {...tx, balance};
+            }).reverse();
+
+            return (
+                <div className="view-section">
+                    <div className="panel glass-panel">
+                        <div className="panel-header"><h2>{tr('stockMovement')}</h2></div>
+                        <div className="table-responsive">
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>{tr('date')}</th><th>{tr('desc')}</th><th>{tr('in')}</th><th>{tr('out')}</th><th>{tr('bal')}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {rows.length===0 ? <tr><td colSpan="5" style={{textAlign:'center', padding:'24px'}}>{tr('noStock')}</td></tr> : 
+                                        rows.map(tx=>(
+                                            <tr key={tx.id}>
+                                                <td>{new Date(tx.date).toLocaleDateString()}</td>
+                                                <td>{tr(tx.type)} - {tx.party}</td>
+                                                <td style={{color:'var(--success)'}}>{tx.type==='purchase'?tx.qty:'-'}</td>
+                                                <td style={{color:'var(--warning)'}}>{tx.type==='sale'?tx.qty:'-'}</td>
+                                                <td><strong>{tx.balance} kg</strong></td>
+                                            </tr>
+                                        ))
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )
+        }
+
+        function ProfilePage({ user, onUpdate, onLogout, tr }) {
+            const [name, setName] = useState(user?.name || '');
+            const [phone, setPhone] = useState(user?.phone || '');
+            const [photo, setPhoto] = useState(user?.photo || null);
+            const [lang, setLang] = useState(user?.language || 'en');
+            const [localThemePref, setLocalThemePref] = useState(user?.themePreference || 'system');
+            const [localTheme, setLocalTheme] = useState(user?.theme || 'dark');
+            const [msg, setMsg] = useState('');
+
+            useEffect(() => {
+                setLocalThemePref(user?.themePreference || 'system');
+                setLocalTheme(user?.theme || 'dark');
+            }, [user?.themePreference, user?.theme]);
+
+            const hasChanges = name!==(user?.name||'') || phone!==(user?.phone||'') || photo!==(user?.photo||null) || lang!==(user?.language||'en') || localTheme!==(user?.theme||'dark') || localThemePref!==(user?.themePreference||'system');
+
+            const handlePhotoUpload = (e) => {
+                const file = e.target.files[0];
+                if(file){
+                    const reader = new FileReader();
+                    reader.onloadend = () => setPhoto(reader.result);
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            const handleSave = (e) => {
+                e.preventDefault();
+                let appliedTheme = localTheme;
+                if (localThemePref === 'system' && window.matchMedia) {
+                    appliedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                onUpdate({ name, phone, photo, language: lang, themePreference: localThemePref, theme: appliedTheme });
+                setMsg(tr('save') + " Success!");
+                setTimeout(()=>setMsg(''), 3000);
+            };
+
+            return (
+                <div className="view-section">
+                    <div className="panel glass-panel" style={{maxWidth:'600px', margin:'0 auto'}}>
+                        <div className="panel-header"><h2>{tr('myProfile')}</h2></div>
+                        {msg && <p style={{color:'var(--success)', marginBottom:'16px', fontSize:'15px', textAlign:'center'}}>{msg}</p>}
+                        
+                        <form onSubmit={handleSave} className="transaction-form">
+                            <div style={{display:'flex', alignItems:'center', gap:'20px', marginBottom:'10px'}}>
+                                <div className="avatar" style={{width:'80px', height:'80px', fontSize:'30px'}}>
+                                    {photo ? <img src={photo} alt="Profile" /> : <i className="fa-solid fa-user"></i>}
+                                </div>
+                                <div>
+                                    <label className="btn btn-secondary" style={{display:'inline-flex', cursor:'pointer'}}>
+                                        <i className="fa-solid fa-camera"></i> {tr('uploadPhoto')}
+                                        <input type="file" accept="image/*" style={{display:'none'}} onChange={handlePhotoUpload} />
+                                    </label>
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label>{tr('name')}</label>
+                                <input type="text" className="glass-input" value={name} onChange={e=>setName(e.target.value)} required />
+                            </div>
+                            <div className="form-group">
+                                <label>{tr('phone')}</label>
+                                <input type="tel" className="glass-input" value={phone} disabled style={{opacity:0.6}} />
+                            </div>
+                            
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>{tr('language')}</label>
+                                    <select className="glass-input" value={lang} onChange={e=>setLang(e.target.value)}>
+                                        <option value="en">English</option>
+                                        <option value="ta">தமிழ் (Tamil)</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>{tr('theme')}</label>
+                                    <select className="glass-input" value={localThemePref === 'system' ? 'system' : localTheme} onChange={e=>{
+                                        const val = e.target.value;
+                                        if (val === 'system') {
+                                            setLocalThemePref('system');
+                                            if (window.matchMedia) {
+                                                setLocalTheme(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                                            }
+                                        } else {
+                                            setLocalThemePref('manual');
+                                            setLocalTheme(val);
+                                        }
+                                    }}>
+                                        <option value="system">🖥️ {tr('systemTheme')}</option>
+                                        <option value="dark">🌙 {tr('dark')}</option>
+                                        <option value="light">☀️ {tr('light')}</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="form-actions" style={{justifyContent:'space-between', marginTop:'30px'}}>
+                                <button type="button" className="btn btn-danger" onClick={onLogout}>
+                                    <i className="fa-solid fa-right-from-bracket"></i> {tr('logout')}
+                                </button>
+                                <button type="submit" className="btn btn-primary" disabled={!hasChanges} style={{opacity:hasChanges?1:0.5, cursor:hasChanges?'pointer':'not-allowed'}}>
+                                    <i className="fa-solid fa-floppy-disk"></i> {tr('save')}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        function App() {
+            const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('currentUser')));
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [showModal, setShowModal] = useState(false);
+            const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+            useEffect(() => {
+                const handleResize = () => setIsMobile(window.innerWidth <= 768);
+                window.addEventListener('resize', handleResize);
+                return () => window.removeEventListener('resize', handleResize);
+            }, []);
+
+            useEffect(() => {
+                const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+                const handleChange = (e) => {
+                    if (user && user.themePreference === 'system') {
+                        const systemTheme = e.matches ? 'dark' : 'light';
+                        updateGlobalDb({ ...user, theme: systemTheme });
+                    }
+                };
                 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="tx_date">Date *</label>
-                        <input type="date" id="tx_date" required class="glass-input">
-                    </div>
-                    <div class="form-group">
-                        <label for="tx_party">Supplier / Customer Name *</label>
-                        <input type="text" id="tx_party" required placeholder="Enter party name" class="glass-input">
-                    </div>
-                </div>
+                if (mediaQuery.addEventListener) {
+                    mediaQuery.addEventListener('change', handleChange);
+                    return () => mediaQuery.removeEventListener('change', handleChange);
+                } else if (mediaQuery.addListener) {
+                    mediaQuery.addListener(handleChange);
+                    return () => mediaQuery.removeListener(handleChange);
+                }
+            }, [user]);
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="tx_qty">Quantity (kg / bundles) *</label>
-                        <input type="number" id="tx_qty" required min="1" placeholder="0" class="glass-input">
-                    </div>
-                    <div class="form-group">
-                        <label for="tx_amount">Total Amount (₹) *</label>
-                        <input type="number" id="tx_amount" required min="0" placeholder="0" class="glass-input">
-                    </div>
-                </div>
+            useEffect(() => {
+                if (user) {
+                    let activeTheme = user.theme;
+                    if (user.themePreference !== 'manual' && window.matchMedia) {
+                        activeTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                        if (user.theme !== activeTheme || user.themePreference !== 'system') {
+                            updateGlobalDb({ ...user, theme: activeTheme, themePreference: 'system' });
+                        }
+                    }
+                    document.body.className = activeTheme;
+                    document.documentElement.className = activeTheme;
+                } else {
+                    document.body.className = 'dark';
+                    document.documentElement.className = 'dark';
+                }
+            }, [user?.theme, user?.themePreference]);
 
-                <div class="form-group">
-                    <label>Payment Received / Settled?</label>
-                    <select id="tx_payment" class="glass-input">
-                        <option value="paid">Paid</option>
-                        <option value="unpaid">Unpaid</option>
-                    </select>
-                </div>
+            const updateGlobalDb = (updatedUser) => {
+                setUser(updatedUser);
+                localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+                
+                const users = JSON.parse(localStorage.getItem('users')) || [];
+                const idx = users.findIndex(u => u.phone === updatedUser.phone);
+                if(idx !== -1) {
+                    users[idx] = updatedUser;
+                    localStorage.setItem('users', JSON.stringify(users));
+                }
+            };
 
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" id="btn-cancel">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Transaction</button>
-                </div>
-            </form>
-        </div>
-    </div>
+            const t_translate = (key) => {
+                const l = user?.language || 'en';
+                return dict[l]?.[key] || dict.en[key] || key;
+            };
 
-    <!-- Script -->
-    <script src="js/app.js"></script>
+            const toggleTheme = () => {
+                const isCurrentlyLight = document.body.className === 'light';
+                const newTheme = isCurrentlyLight ? 'dark' : 'light';
+                updateGlobalDb({ ...user, theme: newTheme, themePreference: 'manual' });
+            };
+
+            const handleLogin = (userData) => {
+                setUser(userData);
+                localStorage.setItem('currentUser', JSON.stringify(userData));
+            };
+
+            const handleLogout = () => {
+                setUser(null);
+                setActiveTab('dashboard');
+                localStorage.removeItem('currentUser');
+            };
+
+            const handleUpdateProfile = (updates) => {
+                const updated = { ...user, ...updates };
+                updateGlobalDb(updated);
+            };
+
+            const addTransaction = (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const newTx = {
+                    id: Date.now().toString(),
+                    type: form.tx_type.value,
+                    date: form.tx_date.value,
+                    party: form.tx_party.value,
+                    qty: parseFloat(form.tx_qty.value),
+                    amount: parseFloat(form.tx_amount.value),
+                    payment: form.tx_payment.value,
+                    createdAt: new Date().toISOString()
+                };
+                
+                const updatedData = {
+                    ...user.data,
+                    transactions: [...user.data.transactions, newTx].sort((a,b) => new Date(b.date) - new Date(a.date))
+                };
+                updateGlobalDb({ ...user, data: updatedData });
+                setShowModal(false);
+            };
+
+            const deleteTx = (id) => {
+                if(window.confirm("Are you sure you want to delete this?")) {
+                    const filtered = user.data.transactions.filter(t => t.id !== id);
+                    updateGlobalDb({ ...user, data: { ...user.data, transactions: filtered } });
+                }
+            };
+
+            const togglePayment = (id) => {
+                const mapped = user.data.transactions.map(t => {
+                    if(t.id === id) return { ...t, payment: t.payment === 'paid' ? 'unpaid' : 'paid' };
+                    return t;
+                });
+                updateGlobalDb({ ...user, data: { ...user.data, transactions: mapped } });
+            };
+
+            if (!user) {
+                return <AuthPage onLogin={handleLogin} />;
+            }
+
+            const transactions = user.data?.transactions || [];
+
+            const tabs = [
+                { id: 'dashboard', label: t_translate('dashboard'), icon: 'fa-chart-pie' },
+                { id: 'transactions', label: t_translate('transactions'), icon: 'fa-money-bill-transfer' },
+                { id: 'stock', label: t_translate('stock'), icon: 'fa-boxes-stacked' },
+                { id: 'profile', label: t_translate('profile'), icon: 'fa-user-gear' }
+            ];
+
+            return (
+                <div className="app-container">
+                    <aside className="sidebar">
+                        <div className="logo-area">
+                            <i className="fa-solid fa-leaf text-accent"></i>
+                            <h2>CoirHub</h2>
+                        </div>
+                        <nav className="nav-menu">
+                            {tabs.map(tab => (
+                                <button key={tab.id} className={`nav-item ${activeTab === tab.id ? 'active' : ''}`} onClick={() => setActiveTab(tab.id)}>
+                                    <i className={`fa-solid ${tab.icon} fa-fw`}></i> {tab.label}
+                                </button>
+                            ))}
+                        </nav>
+                        <div className="user-profile" style={{marginTop: 'auto'}}>
+                            <div className="avatar">
+                                {user.photo ? <img src={user.photo} alt="Profile"/> : <i className="fa-solid fa-user"></i>}
+                            </div>
+                            <div className="user-info">
+                                <span className="user-name">{user?.name || 'User'}</span>
+                                <span className="user-role" style={{textTransform:'uppercase'}}>{user?.language || 'EN'}</span>
+                            </div>
+                        </div>
+                    </aside>
+
+                    <main className="main-content">
+                        <header className="top-bar">
+                            <h1 id="page-title">{tabs.find(t=>t.id===activeTab).label}</h1>
+                            <div className="top-actions" style={{display: 'flex', gap: '12px'}}>
+                                <button className="btn btn-secondary" onClick={toggleTheme}>
+                                    {user?.theme === 'light' ? '🌙' : '☀️'} <span className={isMobile ? "d-none" : ""}>{user?.theme === 'light' ? t_translate('dark') : t_translate('light')}</span>
+                                </button>
+                                {activeTab !== 'profile' && (
+                                    <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+                                        <i className="fa-solid fa-plus"></i> {isMobile ? '' : t_translate('newTx')}
+                                    </button>
+                                )}
+                            </div>
+                        </header>
+
+                        <div className="views-container">
+                            {activeTab === 'dashboard' && <Dashboard transactions={transactions} user={user} tr={t_translate} />}
+                            {activeTab === 'transactions' && <Transactions transactions={transactions} onDelete={deleteTx} onTogglePayment={togglePayment} tr={t_translate} />}
+                            {activeTab === 'stock' && <StockMovement transactions={transactions} tr={t_translate} />}
+                            {activeTab === 'profile' && <ProfilePage user={user} onUpdate={handleUpdateProfile} onLogout={handleLogout} tr={t_translate} />}
+                        </div>
+                    </main>
+
+                    {isMobile && (
+                        <nav className="sidebar-mobile-menu">
+                            {tabs.map(tab => (
+                                <button key={tab.id} className={`${activeTab === tab.id ? 'active' : ''}`} onClick={() => setActiveTab(tab.id)}>
+                                    <i className={`fa-solid ${tab.icon}`}></i><span>{tab.label}</span>
+                                </button>
+                            ))}
+                        </nav>
+                    )}
+
+                    {showModal && (
+                        <div className="modal-overlay">
+                            <div className="modal-content glass-panel" style={{margin:'0 20px'}}>
+                                <div className="modal-header">
+                                    <h2>{t_translate('addTx')}</h2>
+                                    <button className="close-btn" onClick={() => setShowModal(false)}><i className="fa-solid fa-xmark"></i></button>
+                                </div>
+                                <form className="transaction-form" onSubmit={addTransaction}>
+                                    <div className="form-group">
+                                        <label>{t_translate('type')} *</label>
+                                        <div className="radio-group">
+                                            <label className="radio-card">
+                                                <input type="radio" name="tx_type" value="purchase" defaultChecked required />
+                                                <span className="radio-content"><i className="fa-solid fa-cart-arrow-down"></i> {t_translate('purchase')}</span>
+                                            </label>
+                                            <label className="radio-card">
+                                                <input type="radio" name="tx_type" value="sale" required />
+                                                <span className="radio-content"><i className="fa-solid fa-chart-line"></i> {t_translate('sale')}</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label>{t_translate('date')} *</label>
+                                            <input type="date" name="tx_date" required className="glass-input" defaultValue={new Date().toISOString().split('T')[0]}/>
+                                        </div>
+                                        <div className="form-group">
+                                            <label>{t_translate('partyName')} *</label>
+                                            <input type="text" name="tx_party" required className="glass-input" />
+                                        </div>
+                                    </div>
+
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label>{t_translate('qty')} (kg) *</label>
+                                            <input type="number" name="tx_qty" required min="1" className="glass-input" />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>{t_translate('amount')} (₹) *</label>
+                                            <input type="number" name="tx_amount" required min="0" className="glass-input" />
+                                        </div>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label>{t_translate('payment')}</label>
+                                        <select name="tx_payment" className="glass-input">
+                                            <option value="paid">{t_translate('paid')}</option>
+                                            <option value="unpaid">{t_translate('unpaid')}</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="form-actions">
+                                        <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{t_translate('cancel')}</button>
+                                        <button type="submit" className="btn btn-primary">{t_translate('saveTx')}</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
