@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoirHub - Coconut Fibre Rope Business App</title>
+    <!-- Use Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <i class="fa-solid fa-leaf text-accent"></i>
+                <h2>CoirHub</h2>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-target="dashboard">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </a>
+                <a href="#" class="nav-item" data-target="transactions">
+                    <i class="fa-solid fa-money-bill-transfer"></i> Transactions
+                </a>
+                <a href="#" class="nav-item" data-target="stock">
+                    <i class="fa-solid fa-boxes-stacked"></i> Stock Movement
+                </a>
+            </nav>
+            <div class="user-profile">
+                <div class="avatar"><i class="fa-solid fa-user"></i></div>
+                <div class="user-info">
+                    <span class="user-name">Admin</span>
+                    <span class="user-role">Business Owner</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-bar">
+                <h1 id="page-title">Dashboard</h1>
+                <div class="top-actions">
+                    <button class="btn btn-primary" id="btn-new-transaction">
+                        <i class="fa-solid fa-plus"></i> New Transaction
+                    </button>
+                </div>
+            </header>
+
+            <div class="views-container">
+                <!-- Dashboard View -->
+                <section id="dashboard" class="view-section active">
+                    <div class="stats-grid">
+                        <div class="stat-card glass-panel">
+                            <div class="stat-icon bg-blue"><i class="fa-solid fa-box-open"></i></div>
+                            <div class="stat-details">
+                                <h3>Total Stock In Hand</h3>
+                                <p class="stat-value" id="dash-stock">0 kg</p>
+                            </div>
+                        </div>
+                        <div class="stat-card glass-panel">
+                            <div class="stat-icon bg-green"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                            <div class="stat-details">
+                                <h3>Total Sales</h3>
+                                <p class="stat-value" id="dash-sales">₹0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card glass-panel">
+                            <div class="stat-icon bg-orange"><i class="fa-solid fa-cart-shopping"></i></div>
+                            <div class="stat-details">
+                                <h3>Total Purchases</h3>
+                                <p class="stat-value" id="dash-purchases">₹0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card glass-panel">
+                            <div class="stat-icon bg-red"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                            <div class="stat-details">
+                                <h3>Pending Payments</h3>
+                                <p class="stat-value" id="dash-pending">₹0</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-charts glass-panel">
+                        <div class="panel-header" style="margin-bottom: 0;">
+                            <h2>Recent Activity</h2>
+                        </div>
+                        <div class="recent-activity-list" id="recent-activity">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Transactions View -->
+                <section id="transactions" class="view-section hidden">
+                    <div class="panel glass-panel">
+                        <div class="panel-header">
+                            <h2>All Transactions</h2>
+                            <div class="filters">
+                                <select id="filter-type" class="glass-input" style="width: auto;">
+                                    <option value="all">All Types</option>
+                                    <option value="purchase">Purchases</option>
+                                    <option value="sale">Sales</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Party Name</th>
+                                        <th>Quantity</th>
+                                        <th>Amount</th>
+                                        <th>Payment</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactions-body">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Stock View -->
+                <section id="stock" class="view-section hidden">
+                    <div class="panel glass-panel">
+                        <div class="panel-header">
+                            <h2>Stock Movement (Quantity In / Out)</h2>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Description</th>
+                                        <th>In (+)</th>
+                                        <th>Out (-)</th>
+                                        <th>Balance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stock-body">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for New Transaction -->
+    <div id="transaction-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2>Add Transaction</h2>
+                <button class="close-btn" id="close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="transaction-form" class="transaction-form">
+                <div class="form-group">
+                    <label>Transaction Type *</label>
+                    <div class="radio-group">
+                        <label class="radio-card">
+                            <input type="radio" name="tx_type" value="purchase" required>
+                            <span class="radio-content">
+                                <i class="fa-solid fa-cart-arrow-down"></i> Purchase (Stock In)
+                            </span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="tx_type" value="sale" required>
+                            <span class="radio-content">
+                                <i class="fa-solid fa-chart-line"></i> Sale (Stock Out)
+                            </span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tx_date">Date *</label>
+                        <input type="date" id="tx_date" required class="glass-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="tx_party">Supplier / Customer Name *</label>
+                        <input type="text" id="tx_party" required placeholder="Enter party name" class="glass-input">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tx_qty">Quantity (kg / bundles) *</label>
+                        <input type="number" id="tx_qty" required min="1" placeholder="0" class="glass-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="tx_amount">Total Amount (₹) *</label>
+                        <input type="number" id="tx_amount" required min="0" placeholder="0" class="glass-input">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Payment Received / Settled?</label>
+                    <select id="tx_payment" class="glass-input">
+                        <option value="paid">Paid</option>
+                        <option value="unpaid">Unpaid</option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script -->
+    <script src="js/app.js"></script>
+</body>
+</html>
